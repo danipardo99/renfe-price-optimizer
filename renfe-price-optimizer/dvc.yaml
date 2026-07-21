@@ -1,0 +1,27 @@
+# Pipeline DVC. Documentado para el TFM aunque se ejecuta en un momento posterior.
+
+stages:
+  prepare:
+    cmd: python -m renfe_optimizer.features
+    deps:
+      - src/renfe_optimizer/features.py
+      - data/raw/renfe_sample.csv
+    params:
+      - data
+      - features
+    outs:
+      - data/processed/train.parquet
+
+  train:
+    cmd: python -m renfe_optimizer.train --config params.yaml
+    deps:
+      - src/renfe_optimizer/train.py
+      - data/processed/train.parquet
+    params:
+      - model
+      - training
+    outs:
+      - models/renfe_model.pkl
+    metrics:
+      - reports/metrics.json:
+          cache: false

@@ -1,0 +1,39 @@
+data:
+  raw_path: data/raw/renfe_sample.csv
+  processed_path: data/processed/train.parquet
+  origin: MADRID
+  destination: BARCELONA
+features:
+  ventanas_antelacion:
+  - 90
+  - 60
+  - 30
+  - 21
+  - 14
+  - 7
+  - 3
+  - 1
+  categorical:
+  - vehicle_type
+  - vehicle_class
+  - fare
+  numerical:
+  - duration
+  - dias_anticipacion
+  - hora_salida
+  - dia_semana
+  - mes
+model:
+  type: xgboost
+  params:
+    n_estimators: 400
+    max_depth: 6
+    learning_rate: 0.08
+    random_state: 42
+training:
+  test_size: 0.2
+  random_state: 42
+  target: price
+paths:
+  model_out: models/renfe_model.pkl
+  metrics_out: reports/metrics.json

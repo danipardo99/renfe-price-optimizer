@@ -1,0 +1,14 @@
+# Entornos virtuales
+.venv/
+renfe-price-optimizer/.venv/
+
+# Base de datos MLflow local
+renfe-price-optimizer/mlflow.db
+
+# Credenciales
+.env
+renfe-price-optimizer/.env
+
+# Cach?s Python
+__pycache__/
+*.pyc

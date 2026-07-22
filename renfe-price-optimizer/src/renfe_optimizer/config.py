@@ -27,7 +27,8 @@ def load_params(path: str | Path = PARAMS_PATH) -> dict:
 # Variables de entorno con valores por defecto sensatos
 MODEL_PATH = os.getenv("MODEL_PATH", str(ROOT_DIR / "models" / "renfe_model.pkl"))
 DATA_PATH = os.getenv("DATA_PATH", str(ROOT_DIR / "data" / "processed" / "train.parquet"))
-MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", str(ROOT_DIR / "mlruns"))
+_mlflow_default = (ROOT_DIR / "mlruns").as_uri()
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", _mlflow_default)
 MLFLOW_EXPERIMENT_NAME = os.getenv("MLFLOW_EXPERIMENT_NAME", "renfe-price-optimizer")
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
 API_PORT = int(os.getenv("API_PORT", "8000"))

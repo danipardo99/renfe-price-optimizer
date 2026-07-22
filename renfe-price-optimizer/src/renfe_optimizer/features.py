@@ -72,10 +72,12 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Precio nulo → no hay oferta, se descarta
     df = df.dropna(subset=["price"])
+    df = df[df["price"] > 5]      # descarta billetes de 0€ o sospechosamente baratos
+    df = df[df["price"] < 500]    # descarta outliers absurdos
 
     # Fechas
-    df["departure"] = pd.to_datetime(df["departure"])
-    df["insert_date"] = pd.to_datetime(df["insert_date"])
+    df["departure"] = pd.to_datetime(df["departure"], format="mixed", errors="coerce")
+    df["insert_date"] = pd.to_datetime(df["insert_date"], format="mixed", errors="coerce")
 
     df["dias_anticipacion"] = calcular_dias_anticipacion(df["departure"], df["insert_date"])
     df["hora_salida"] = df["departure"].dt.hour

@@ -9,6 +9,10 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./renfe-price-optimizer
+
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
@@ -23,12 +27,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Instalar paquete en modo editable
+        run: pip install -e .
+
       - name: Revisar estilo con Ruff
         run: ruff check .
 
       - name: Ejecutar tests
         run: pytest -v
 
-      - name: Smoke test de entrenamiento (muestra pequeña)
-        run: |
-          python -m renfe_optimizer.train --config params.yaml --sample --max-rows 500
+      - name: Smoke test de entrenamiento
+        run: python -m renfe_optimizer.train --config params.yaml --sample --max-rows 500

@@ -12,13 +12,11 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 
 import joblib
 import mlflow
 import mlflow.sklearn
 import numpy as np
-import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
@@ -34,7 +32,6 @@ from renfe_optimizer.config import (
     load_params,
 )
 from renfe_optimizer.features import load_and_build
-
 
 # ---------------------------------------------------------------------------
 # Factory de modelos

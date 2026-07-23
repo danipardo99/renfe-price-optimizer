@@ -9,11 +9,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 from renfe_optimizer.config import ROOT_DIR, load_params
-
 
 # ---------------------------------------------------------------------------
 # Funciones puras (fácilmente testables)

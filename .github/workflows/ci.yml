@@ -37,4 +37,8 @@ jobs:
         run: pytest -v
 
       - name: Smoke test de entrenamiento
-        run: python -m renfe_optimizer.train --config params.yaml --sample --max-rows 500
+        env:
+          RENFE_RAW_PATH: data/raw/renfe_sample.csv
+        run: |
+          python -c "import yaml; p=yaml.safe_load(open('params.yaml')); p['data']['raw_path']='data/raw/renfe_sample.csv'; yaml.dump(p, open('params.yaml','w'), sort_keys=False)"
+          python -m renfe_optimizer.train --config params.yaml --sample --max-rows 500

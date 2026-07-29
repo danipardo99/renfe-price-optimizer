@@ -107,7 +107,7 @@ def train(config_path: str = "params.yaml", sample: bool = False, max_rows: int 
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
     mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
 
-    with mlflow.start_run(run_name=f"{params['model']['type']}-baseline"):
+    with mlflow.start_run(run_name=f"{params['model']['type']}"):
         pipe = build_pipeline(params["model"], params["features"])
         pipe.fit(X_train, y_train)
         y_pred = pipe.predict(X_test)
@@ -115,7 +115,7 @@ def train(config_path: str = "params.yaml", sample: bool = False, max_rows: int 
         metrics = evaluate(y_test.to_numpy(), y_pred)
 
         # Registro
-        mlflow.log_params(params["model"]["params"])
+        mlflow.log_params(params["model"].get("params", {}))
         mlflow.log_param("model_type", params["model"]["type"])
         mlflow.log_metrics(metrics)
 
@@ -124,6 +124,9 @@ def train(config_path: str = "params.yaml", sample: bool = False, max_rows: int 
         model_out.parent.mkdir(parents=True, exist_ok=True)
         joblib.dump(pipe, model_out)
         mlflow.log_artifact(str(model_out), artifact_path="model")
+
+        # Model Registry: registra el modelo en MLflow (además del artefacto)
+        mlflow.sklearn.log_model(pipe, artifact_path="mlflow_model")
 
         metrics_out = ROOT_DIR / params["paths"]["metrics_out"]
         metrics_out.parent.mkdir(parents=True, exist_ok=True)

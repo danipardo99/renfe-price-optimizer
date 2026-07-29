@@ -55,9 +55,14 @@ def recommend(features: dict, ventanas: list[int] | None = None) -> dict:
     df = pd.DataFrame(filas)
     precios = model.predict(df)
 
-    idx_min = int(np.argmin(precios))
-    dias_optimo = int(ventanas[idx_min])
-    precio_optimo = float(precios[idx_min])
+        # Solo consideramos ventanas que el usuario TODAVÍA puede elegir
+    # (antelaciones menores o iguales a la actual)
+    opciones = [(d, p) for d, p in zip(ventanas, precios) if d <= dias_hoy]
+    if not opciones:
+        opciones = list(zip(ventanas, precios))
+    dias_optimo, precio_optimo = min(opciones, key=lambda x: x[1])
+    dias_optimo = int(dias_optimo)
+    precio_optimo = float(precio_optimo)
     precio_hoy = float(model.predict(pd.DataFrame([features]))[0])
 
     dias_hasta_optimo = dias_hoy - dias_optimo   # >0 → esperar; ≤0 → comprar

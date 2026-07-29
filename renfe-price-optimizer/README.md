@@ -83,15 +83,27 @@ docker compose up --build
 
 ---
 
-## 📊 KPIs objetivo
+## 📊 KPIs
+
+Distinguimos entre **KPIs técnicos medibles en el TFM** (evaluables con el dataset de 2019) y **KPIs de negocio** (objetivos a futuro que requieren usuarios reales y, por tanto, NO son medibles en este trabajo).
+
+### KPIs técnicos (medibles en el TFM)
+
+| KPI | Meta |
+|---|---|
+| MAPE del modelo | < 10 % |
+| R² del modelo | ≥ 0,80 |
+| MAE / RMSE | Reportados en cada run de MLflow |
+| Latencia de recomendación | < 3 s |
+
+### KPIs de negocio (objetivo a futuro, NO medibles con datos de 2019)
 
 | KPI | Meta |
 |---|---|
 | Ahorro medio por billete | ≥ 15 % |
 | % compras en ventana óptima | ≥ 60 % |
-| MAPE del modelo | < 10 % |
-| R² del modelo | ≥ 0,80 |
-| Latencia de recomendación | < 3 s |
+| Tasa de conversión | +10 p.p. |
+| Plataformas piloto integradas | 2 |
 
 ---
 

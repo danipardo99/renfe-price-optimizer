@@ -13,7 +13,8 @@ venv/
 # Datos y modelos (versionados con DVC)
 data/raw/*
 !data/raw/.gitkeep
-!data/raw/renfe_sample.csv       # solo el sample de ejemplo va en Git
+# solo el sample de ejemplo va en Git
+!data/raw/renfe_sample.csv
 data/processed/*
 !data/processed/.gitkeep
 models/*.pkl

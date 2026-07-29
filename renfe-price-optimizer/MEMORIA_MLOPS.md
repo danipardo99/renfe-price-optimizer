@@ -68,7 +68,7 @@ En un TFM tradicional, el data scientist termina con un notebook que entrena un 
 Aplicado a nuestro TFM Renfe, el rol de MLOps es:
 
 - Garantizar que **cualquier miembro del equipo** (o el tribunal) puede clonar el repositorio y ejecutar el pipeline completo.
-- Que **cada experimento** (probando XGBoost, Random Forest, Prophet…) queda registrado con sus parámetros y métricas.
+- Que **cada experimento** (probando XGBoost, Random Forest, regresión lineal…) queda registrado con sus parámetros y métricas.
 - Que el **modelo servido** por la plataforma Streamlit es exactamente el que se entrenó y validó, sin ambigüedades.
 - Que si mañana **cambian los datos** (post-liberalización, con Ouigo e Iryo), el pipeline se re-ejecuta con un solo comando.
 
@@ -92,7 +92,7 @@ El ciclo de vida de un proyecto MLOps se estructura en cinco fases encadenadas p
 | Fase | Objetivo | Actividades | En el TFM Renfe |
 |---|---|---|---|
 | **1. Datos** | Ingesta, limpieza y versionado | Extracción, validación, feature engineering | CSV Kaggle → capa raw → ETL Apache Hop → DWH MySQL |
-| **2. Training** | Entrenar modelos reproducibles | Split, tuning, tracking de experimentos | XGBoost / RF / SARIMAX con MLflow |
+| **2. Training** | Entrenar modelos reproducibles | Split, tuning, tracking de experimentos | XGBoost / RF / regresión lineal con MLflow |
 | **3. Validación** | Comprobar métricas y sesgos | MAE, RMSE, MAPE, R², SHAP, walk-forward | Meta: MAPE < 10 %, R² ≥ 0,80 |
 | **4. Deploy** | Servir el modelo | Empaquetado, API, contenedor | FastAPI + Streamlit + Docker |
 | **5. Monitoring** | Vigilar rendimiento y drift | Métricas de servicio, drift de datos | Logs FastAPI + comparativa de métricas MLflow entre runs |
@@ -257,7 +257,7 @@ Regla de oro del bloque 4 y 6:
 
 ### 5.2. Montaje de GitHub paso a paso (VS Code + WSL2)
 
-> Guía completa y ejecutable en [`GITHUB_SETUP.md`](./GITHUB_SETUP.md). Aquí resumimos los pasos clave.
+> Guía completa y ejecutable en [`GITHUB_SETUP.md`](./GITHUB_SETs los pasos clave.
 
 ```bash
 # 1. Crear el repositorio en GitHub (web): "renfe-price-optimizer"
@@ -384,12 +384,12 @@ uv run mlflow ui --backend-store-uri ./mlruns
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 mlflow.set_experiment("renfe-price-optimizer")
 
-with mlflow.start_run(run_name="xgboost-baseline"):
+with mlflow.start_run(run_name="xgboost"):
     pipe.fit(X_train, y_train)
     y_pred = pipe.predict(X_test)
     metrics = evaluate(y_test, y_pred)   # MAE, RMSE, MAPE, R²
 
-    mlflow.log_params(params["model"]["params"])
+    mlflow.log_params(params["model"].get("params", {}))
     mlflow.log_param("model_type", "xgboost")
     mlflow.log_metrics(metrics)
 
@@ -505,7 +505,7 @@ curl -X POST http://localhost:8000/predict \
 {
   "precio_estimado_hoy": 72.4,
   "precio_minimo_esperado": 58.9,
-  "antelacion_optima_dias": 60,
+  "antelacion_optima_dias": 30,
   "ahorro_estimado_eur": 13.5,
   "ahorro_estimado_pct": 18.6,
   "recomendacion": "ESPERA 15 días",
@@ -520,8 +520,10 @@ curl -X POST http://localhost:8000/predict \
 ```dockerfile
 FROM python:3.11-slim
 WORKDIR /app
-COPY requirements.txt . && RUN pip install --no-cache-dir -r requirements.txt
-COPY src/ src/ && COPY models/ models/
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY src/ src/
+COPY models/ models/
 EXPOSE 8000
 CMD ["uvicorn", "renfe_optimizer.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
@@ -544,7 +546,7 @@ En un despliegue real del Renfe Price Optimizer, la monitorización se organizar
 ### 7.2. Monitorización del modelo (offline vs online)
 
 - **Comparativa entre runs de MLflow**: al reentrenar, ¿mejora MAPE contra el modelo actual?
-- **Métricas de negocio**: ¿los usuarios que siguen la recomendación ahorran realmente ese 15 %?
+- **Métricas de negocio** (objetivo a futuro, NO medible con datos de 2019): ¿los usuarios que siguen la recomendación ahorran realmente ese 15 %? Requiere usuarios reales y no se evalúa en este TFM.
 
 ### 7.3. Deriva de datos (data drift)
 
@@ -573,7 +575,7 @@ Este trabajo demuestra cómo **transformar un notebook académico en un sistema 
 
 1. **Model Registry en producción**: promoción automática a Staging/Production tras métrica objetivo.
 2. **Data drift automático**: job programado que compara distribuciones y dispara reentrenamiento.
-3. **A/B testing** entre modelos (Random Forest vs XGBoost vs Prophet) sobre tráfico real.
+3. **A/B testing** entre modelos (Random Forest vs XGBoost vs regresión lineal) sobre tráfico real.
 4. **Ampliar el dataset** a datos post-liberalización con Ouigo e Iryo.
 5. **Migrar el tracking** a Azure ML o Databricks cuando el volumen lo justifique.
 6. **Evolucionar la interfaz** hacia un agente conversacional (Copilot Studio + LLM).

@@ -10,7 +10,6 @@ from functools import lru_cache
 from pathlib import Path
 
 import joblib
-import numpy as np
 import pandas as pd
 
 from renfe_optimizer.config import MODEL_PATH

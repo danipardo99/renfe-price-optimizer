@@ -10,13 +10,16 @@ __pycache__/
 venv/
 .env
 
-# Datos y modelos (versionados con DVC)
+# Datos crudos: se ignoran todos salvo el sample multidestino usado por el CI
 data/raw/*
 !data/raw/.gitkeep
-# solo el sample de ejemplo va en Git
-!data/raw/renfe_sample.csv
+!data/raw/renfe_clean_sample.csv
+
+# Datos procesados
 data/processed/*
 !data/processed/.gitkeep
+
+# Modelos entrenados
 models/*.pkl
 models/*.joblib
 

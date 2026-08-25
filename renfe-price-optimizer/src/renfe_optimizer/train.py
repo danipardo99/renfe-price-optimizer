@@ -126,7 +126,14 @@ def train(config_path: str = "params.yaml", sample: bool = False, max_rows: int 
         mlflow.log_artifact(str(model_out), artifact_path="model")
 
         # Model Registry: registra el modelo en MLflow (además del artefacto)
-        mlflow.sklearn.log_model(pipe, artifact_path="mlflow_model")
+        mlflow.sklearn.log_model(
+            pipe,
+            name="mlflow_model",
+            skops_trusted_types=[
+                 "xgboost.core.Booster",
+                 "xgboost.sklearn.XGBRegressor",
+           ],
+        )
 
         metrics_out = ROOT_DIR / params["paths"]["metrics_out"]
         metrics_out.parent.mkdir(parents=True, exist_ok=True)

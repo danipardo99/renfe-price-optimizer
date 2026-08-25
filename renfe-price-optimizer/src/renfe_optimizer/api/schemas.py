@@ -8,18 +8,23 @@ from pydantic import BaseModel, Field
 
 
 class ConsultaIn(BaseModel):
-    """Payload de la consulta del usuario para el corredor Madrid-Barcelona."""
+    """Payload de la consulta del usuario. Trayectos desde Madrid."""
 
-    vehicle_type: Literal["AVE", "AVE-TGV", "AVLO", "ALVIA"] = "AVE"
+    destino: Literal["BARCELONA", "SEVILLA", "VALENCIA"] = "BARCELONA"
+    vehicle_type: Literal[
+        "AVE", "R. EXPRES", "AV City", "INTERCITY", "ALVIA", "MD", "REGIONAL"
+    ] = "AVE"
     vehicle_class: Literal["Turista", "Turista Plus", "Preferente"] = "Turista"
-    fare: Literal["Promo", "Promo +", "Flexible", "Adulto ida"] = "Promo"
+    fare: Literal["Promo", "Flexible", "Adulto ida"] = "Promo"
 
-    duration: float = Field(2.75, ge=1.0, le=6.0, description="Duración en horas")
+    duration: float = Field(2.75, ge=0.5, le=12.0, description="Duración en horas")
     dias_anticipacion: int = Field(30, ge=0, le=180)
     hora_salida: int = Field(9, ge=0, le=23)
-    dia_semana: int = Field(1, ge=0, le=6, description="0=lunes … 6=domingo")
+    dia_semana: Literal[
+        "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
+    ] = "Jueves"
     mes: int = Field(6, ge=1, le=12)
-    temporada: Literal["invierno", "primavera", "verano", "otoño"] = "verano"
+    temporada: Literal["Primavera", "Verano", "Otoño", "Invierno"] = "Verano"
 
 
 class PuntoCurva(BaseModel):

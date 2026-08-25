@@ -437,6 +437,34 @@ El proceso de feature engineering generó **13.025.112 registros válidos** para
 El modelo explica aproximadamente el 93 % de la variabilidad observada en el precio y mantiene un error porcentual absoluto medio inferior al 10 %. Estos resultados sustituyen las métricas obtenidas previamente con el baseline limitado al corredor Madrid–Barcelona.
 
 Los indicadores de ahorro real, adopción, conversión o porcentaje de compras realizadas en la ventana óptima se consideran **KPIs de negocio futuros**. No se presentan como resultados medidos porque el TFM utiliza datos históricos y no dispone todavía de usuarios reales en producción.
+
+#### 5.6.2. Interpretabilidad del modelo mediante SHAP
+
+
+El análisis SHAP proporciona una explicación consistente del modelo XGBoost.
+
+La tarifa es la variable con mayor influencia global, seguida del destino, el
+tipo de tren, la duración y la clase. Estas variables representan las
+características comerciales y operativas más utilizadas por el modelo para
+distinguir niveles de precio.
+
+La tarifa Flexible, el destino Barcelona, el servicio AVE y la clase Preferente
+presentan generalmente contribuciones asociadas a predicciones superiores. La
+clase Turista se asocia principalmente a contribuciones negativas.
+
+La duración presenta un comportamiento no lineal y debe interpretarse junto con
+la ruta y el tipo de servicio. Las variables temporales tienen una importancia
+global inferior, aunque continúan interviniendo en predicciones concretas.
+
+Los días de antelación presentan una importancia global moderada, pero son
+esenciales para construir la curva de precios y generar la recomendación de
+comprar o esperar.
+
+Finalmente, las explicaciones globales y locales mejoran la trazabilidad del
+modelo, permiten justificar sus predicciones y reducen la opacidad del sistema.
+Los resultados deben interpretarse como contribuciones predictivas, no como
+relaciones causales.
+
 ### 5.7. CI con GitHub Actions
 
 El workflow `.github/workflows/ci.yml` se ejecuta en cada PR:

@@ -33,6 +33,30 @@ El proyecto implementa un flujo MLOps end-to-end con:
 - validación automática con GitHub Actions;
 - versionado de código con Git y de datos pesados mediante DVC o almacenamiento externo.
 
+## 🔎 Interpretabilidad SHAP
+
+El modelo final XGBoost se interpreta mediante SHAP sobre una muestra de
+2.000 observaciones del dataset multidestino.
+
+La importancia global agregada muestra que las variables más relevantes son:
+
+1. Tarifa: 9,46.
+2. Destino: 8,49.
+3. Tipo de tren: 7,78.
+4. Duración: 7,63.
+5. Clase: 4,97.
+
+El análisis incluye importancia global, gráfico beeswarm, gráficos de
+dependencia y explicaciones locales mediante waterfall plots.
+
+Los resultados están disponibles en:
+
+- `notebooks/03_interpretabilidad_shap.ipynb`
+- `reports/shap/`
+
+Los valores SHAP explican contribuciones predictivas del modelo y no deben
+interpretarse como relaciones causales.
+
 ## 📊 Resultados del modelo final
 
 El modelo final se entrenó sobre el dataset limpio multidestino generado por el proceso de EDA.

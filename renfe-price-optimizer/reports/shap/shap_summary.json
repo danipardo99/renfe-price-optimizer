@@ -1,0 +1,17 @@
+{
+  "modelo": "XGBRegressor",
+  "filas_explicadas": 2000,
+  "variables_mas_relevantes": [
+    "fare",
+    "destino",
+    "vehicle_type",
+    "duration",
+    "vehicle_class"
+  ],
+  "destinos_analizados": [
+    "BARCELONA",
+    "SEVILLA",
+    "VALENCIA"
+  ],
+  "nota": "Las importancias SHAP describen contribuciones al modelo, no relaciones causales."
+}

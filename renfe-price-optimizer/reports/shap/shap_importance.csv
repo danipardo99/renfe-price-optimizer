@@ -1,0 +1,44 @@
+feature,mean_abs_shap
+cat__fare_Flexible,9.177604
+num__duration,7.6254053
+cat__vehicle_type_AVE,6.3143535
+cat__destino_BARCELONA,5.6838727
+cat__vehicle_class_Turista,4.0856
+num__hora_salida,2.494846
+cat__destino_MADRID,1.7942474
+num__dias_anticipacion,1.5514976
+num__mes,0.98655766
+cat__vehicle_class_Preferente,0.73789656
+cat__dia_semana_Viernes,0.7175773
+cat__dia_semana_Domingo,0.59263694
+cat__destino_SEVILLA,0.53248084
+cat__vehicle_type_REGIONAL,0.5286841
+cat__vehicle_type_INTERCITY,0.4967455
+cat__destino_VALENCIA,0.414301
+cat__dia_semana_Martes,0.41262564
+cat__dia_semana_Lunes,0.40939167
+cat__dia_semana_Sábado,0.3422912
+cat__dia_semana_Jueves,0.28805676
+cat__fare_Promo,0.26340085
+cat__vehicle_type_ALVIA,0.17793036
+cat__dia_semana_Miércoles,0.1762787
+cat__temporada_Verano,0.1719683
+cat__vehicle_class_Turista Plus,0.14652738
+cat__temporada_Primavera,0.1294151
+cat__vehicle_type_LD,0.11853733
+cat__destino_MÁLAGA,0.06063988
+cat__vehicle_type_AV City,0.06054915
+cat__vehicle_type_EUROMED,0.028413273
+cat__temporada_Otoño,0.02395081
+cat__vehicle_type_R. EXPRES,0.017935175
+cat__vehicle_type_MD,0.016244845
+cat__vehicle_type_TORRE ORO,0.015588103
+cat__temporada_Invierno,0.01239062
+cat__fare_YOVOY,0.012161996
+cat__fare_Adulto ida,0.0047771526
+cat__vehicle_type_AVLO,0.004654077
+cat__fare_Mesa,0.0019753987
+cat__fare_COD.PROMOCIONAL,0.0018511644
+cat__vehicle_type_AVANT,0.0
+cat__fare_Básica,0.0
+cat__fare_Grupos Ida,0.0

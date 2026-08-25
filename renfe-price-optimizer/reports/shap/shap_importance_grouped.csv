@@ -1,0 +1,11 @@
+original_feature,mean_abs_shap
+fare,9.46177
+destino,8.485541
+vehicle_type,7.7796354
+duration,7.6254053
+vehicle_class,4.9700236
+dia_semana,2.9388583
+hora_salida,2.494846
+dias_anticipacion,1.5514976
+mes,0.98655766
+temporada,0.33772483

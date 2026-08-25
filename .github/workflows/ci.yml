@@ -42,5 +42,5 @@ jobs:
         env:
           MLFLOW_TRACKING_URI: sqlite:///mlflow-ci.db
         run: |
-          python -c "import yaml; p=yaml.safe_load(open('params.yaml')); p['data']['raw_path']='data/raw/renfe_clean_sample.csv'; yaml.safe_dump(p, open('params.yaml','w'), sort_keys=False)"
+          uv run python -c "import yaml; p=yaml.safe_load(open('params.yaml')); p['data']['raw_path']='data/raw/renfe_clean_sample.csv'; yaml.safe_dump(p, open('params.yaml','w'), sort_keys=False)"
           uv run python -m renfe_optimizer.train --config params.yaml --sample --max-rows 500

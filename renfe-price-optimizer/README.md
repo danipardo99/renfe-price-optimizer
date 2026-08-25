@@ -1,16 +1,63 @@
-# renfe-price-optimizer
+# 🚄 Renfe Price Optimizer
 
-**TFM MLOps — Predicción de precios dinámicos Renfe (Madrid–Barcelona) y recomendación del momento óptimo de compra.**
+[![CI](https://github.com/danipardo99/renfe-price-optimizer/actions/workflows/ci.yml/badge.svg)](https:e-optimizer/actions)
 
-Autores: Alejandro Montenegro · Laura Nieto · Daniel Pardo · *Julio 2026*
+TFM MLOps para la predicción de precios de billetes ferroviarios y la recomendación del momento óptimo de compra en tres corredores con origen Madrid:
 
----
+- Madrid → Barcelona
+- Madrid → Sevilla
+- Madrid → Valencia
+
+**Autores:** Alejandro Montenegro · Laura Nieto · Daniel Pardo  
+**Modelo final:** XGBoost · regresión tabular supervisada  
+**Datos:** histórico de precios Renfe de 2019
 
 ## 🎯 Qué hace este proyecto
 
-A partir de un histórico real de precios de Renfe (AVE, AVLO, ALVIA) en el corredor Madrid–Barcelona (abril–agosto 2019), entrena modelos supervisados que **predicen el precio del billete** en función de la antelación de compra y el resto de variables explicativas, y devuelve al usuario una **recomendación accionable**: *«compra hoy»*, *«espera X días»* o *«alerta: el precio va a subir»*.
+El sistema predice el precio de un billete en función del destino, el tipo de tren, la clase, la tarifa, la duración, los días de antelación, la hora de salida, el día de la semana, el mes y la temporada.
 
-El objetivo del repositorio **no es solo el modelo**, es demostrar un flujo **MLOps end-to-end**: estructura profesional, control de versiones (Git + DVC), experimentación reproducible (MLflow), servicio (FastAPI + Streamlit), empaquetado (Docker) y validación automática (GitHub Actions).
+Además de estimar el precio, evalúa la curva precio-antelación y devuelve una recomendación accionable:
+
+- **COMPRA HOY**
+- **COMPRA HOY: el precio va a subir**
+- **ESPERA X días**
+
+El proyecto implementa un flujo MLOps end-to-end con:
+
+- preparación y validación del dato;
+- entrenamiento reproducible con XGBoost;
+- tracking de experimentos y artefactos con MLflow;
+- API de predicción con FastAPI;
+- aplicación multidestino con Streamlit;
+- empaquetado con Docker;
+- validación automática con GitHub Actions;
+- versionado de código con Git y de datos pesados mediante DVC o almacenamiento externo.
+
+## 📊 Resultados del modelo final
+
+El modelo final se entrenó sobre el dataset limpio multidestino generado por el proceso de EDA.
+
+| Métrica | Resultado | Objetivo | Estado |
+|---|---:|---:|:---:|
+| Registros procesados | 13.025.112 | — | ✅ |
+| MAE | 4,42 € | — | ✅ |
+| RMSE | 6,73 € | — | ✅ |
+| MAPE | 8,16 % | < 10 % | ✅ |
+| R² | 0,93 | ≥ 0,80 | ✅ |
+
+El modelo supera los objetivos técnicos definidos para el TFM. Los indicadores de comportamiento de usuario, ahorro real o conversión continúan siendo objetivos de negocio futuros, ya que requieren uso real de la plataforma.
+
+## 🧠 Modelado
+
+El problema se formula como **regresión tabular supervisada**.
+
+Se compararon los siguientes enfoques:
+
+1. Regresión lineal como baseline.
+2. Random Forest como alternativa no lineal.
+3. XGBoost como modelo final seleccionado.
+
+XGBoost se utiliza en la versión servida por FastAPI y Streamlit debido a sus mejores resultados sobre el dataset multidestino.
 
 ---
 
@@ -36,7 +83,7 @@ renfe-price-optimizer/
 ├── params.yaml / dvc.yaml
 ├── Dockerfile / docker-compose.yml
 ├── .github/workflows/ci.yml
-├── data/raw/renfe_sample.csv     # dataset (versionado con DVC en real)
+├── data/raw/renfe_clean_sample.csv     # dataset (versionado con DVC en real)
 ├── notebooks/01_eda.ipynb
 ├── src/renfe_optimizer/
 │   ├── config.py · features.py · train.py · predict.py

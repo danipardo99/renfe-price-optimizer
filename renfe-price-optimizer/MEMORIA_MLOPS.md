@@ -4,13 +4,13 @@
 
 **Autores:** Alejandro Montenegro · Laura Nieto · Daniel Pardo
 
-**Caso conductor:** predicción de precios dinámicos Renfe en el corredor Madrid–Barcelona y recomendación del momento óptimo de compra.
+**Caso conductor:** predicción de precios dinámicos de Renfe en los corredores Madrid–Barcelona, Madrid–Sevilla y Madrid–Valencia, con origen Madrid, y recomendación del momento óptimo de compra.
 
 ---
 
 ## Resumen ejecutivo
 
-Este documento presenta el planteamiento MLOps aplicado al TFM *Predicción de precios dinámicos en el sector ferroviario español de alta velocidad*. Sobre un histórico real de precios de la web oficial de Renfe (abril–agosto 2019), montamos una arquitectura MLOps end-to-end que va del CSV en crudo hasta una plataforma web accionable, pasando por versionado de datos (DVC), experimentación reproducible (MLflow), servicio (FastAPI + Streamlit), empaquetado (Docker) y validación automática (GitHub Actions).
+Este documento presenta el planteamiento MLOps aplicado al TFM _Predicción de precios dinámicos en el sector ferroviario español de alta velocidad_. Sobre un histórico real de precios de Renfe de 2019, el equipo construye una arquitectura MLOps end-to-end para tres corredores con origen Madrid y destino Barcelona, Sevilla o Valencia. El sistema recorre el ciclo completo desde el dato en crudo hasta una plataforma web accionable, pasando por limpieza y EDA, entrenamiento de un modelo XGBoost de regresión tabular, tracking con MLflow, servicio mediante FastAPI y Streamlit, empaquetado con Docker y validación automática con GitHub Actions.
 
 El trabajo cubre los seis criterios de la rúbrica de evaluación (10 puntos totales) y se acompaña de un repositorio ejecutable con el código, los tests, los workflows y la memoria.
 
@@ -227,7 +227,7 @@ Regla de oro del bloque 4 y 6:
                     └──────────────────────────────────────────┘
 
   CSV Kaggle Renfe                                          Usuario final
-    (2019, MAD-BCN)                                    (viajero / broker)
+    (2019, MAD→BCN / SVQ / VLC)                                    (viajero / broker)
          │                                                     ▲
          ▼                                                     │
    ┌─────────────┐                                     ┌───────────────┐
@@ -329,12 +329,13 @@ renfe-price-optimizer/
 ├── docker-compose.yml           # api + streamlit + mlflow
 ├── .github/workflows/ci.yml     # GitHub Actions
 ├── data/
-│   ├── raw/renfe_sample.csv     # muestra versionable
+│   ├── raw/renfe_clean_sample.csv     # muestra versionable
 │   └── processed/               # generado por features.py
 ├── models/                      # modelo entrenado (DVC)
 ├── reports/metrics.json         # métricas del último run
 ├── notebooks/
-│   └── 01_eda.ipynb             # exploración
+├── 01_eda.ipynb
+└── 02_eda_completo.ipynb             # exploración
 ├── src/renfe_optimizer/
 │   ├── __init__.py
 │   ├── config.py                # rutas y .env
@@ -414,7 +415,28 @@ with mlflow.start_run(run_name="xgboost"):
 mlflow.register_model("runs:/<run_id>/model", "renfe-price-optimizer")
 # Luego, desde la UI: promocionar a "Staging" o "Production"
 ```
+#### 5.6.1. Modelo final multidestino y resultados
 
+La versión final del pipeline utiliza un modelo **XGBoost de regresión tabular supervisada**. El dataset limpio incorpora trayectos con origen Madrid y tres destinos:
+
+- Barcelona;
+- Sevilla;
+- Valencia.
+
+La variable `destino` se incorpora como feature categórica junto con el tipo de tren, la clase, la tarifa, el día de la semana y la temporada. Las variables numéricas incluyen duración, días de antelación, hora de salida y mes.
+
+El proceso de feature engineering generó **13.025.112 registros válidos** para el entrenamiento.
+
+| Métrica | Resultado | Objetivo técnico | Cumplimiento |
+|---|---:|---:|:---:|
+| MAE | 4,42 € | — | ✅ |
+| RMSE | 6,73 € | — | ✅ |
+| MAPE | 8,16 % | < 10 % | ✅ |
+| R² | 0,93 | ≥ 0,80 | ✅ |
+
+El modelo explica aproximadamente el 93 % de la variabilidad observada en el precio y mantiene un error porcentual absoluto medio inferior al 10 %. Estos resultados sustituyen las métricas obtenidas previamente con el baseline limitado al corredor Madrid–Barcelona.
+
+Los indicadores de ahorro real, adopción, conversión o porcentaje de compras realizadas en la ventana óptima se consideran **KPIs de negocio futuros**. No se presentan como resultados medidos porque el TFM utiliza datos históricos y no dispone todavía de usuarios reales en producción.
 ### 5.7. CI con GitHub Actions
 
 El workflow `.github/workflows/ci.yml` se ejecuta en cada PR:
@@ -481,37 +503,41 @@ docker compose up --build
 
 El endpoint `/predict` recibe una consulta del usuario y devuelve la recomendación. La documentación interactiva vive en `/docs` gracias a FastAPI + Pydantic.
 
-**Ejemplo de request**:
+**Ejemplo de request:**
 
 ```bash
 curl -X POST http://localhost:8000/predict \
      -H "Content-Type: application/json" \
      -d '{
+       "destino": "SEVILLA",
        "vehicle_type": "AVE",
        "vehicle_class": "Turista",
        "fare": "Promo",
-       "duration": 2.75,
-       "dias_anticipacion": 45,
+       "duration": 2.70,
+       "dias_anticipacion": 30,
        "hora_salida": 9,
-       "dia_semana": 4,
-       "mes": 6,
-       "temporada": "verano"
+       "dia_semana": "Viernes",
+       "mes": 7,
+       "temporada": "Verano"
      }'
-```
 
-**Ejemplo de respuesta**:
+```markdown 
+**Estructura de la respuesta:**
 
-```json
-{
-  "precio_estimado_hoy": 72.4,
-  "precio_minimo_esperado": 58.9,
-  "antelacion_optima_dias": 30,
-  "ahorro_estimado_eur": 13.5,
-  "ahorro_estimado_pct": 18.6,
-  "recomendacion": "ESPERA 15 días",
-  "curva": [ ... ]
-}
-```
+ ```json 
+ { 
+   "precio_estimado_hoy": "<precio en euros>",
+   "precio_minimo_esperado": "<precio en euros>",
+   "antelacion_optima_dias": "<número de días>", 
+   "ahorro_estimado_eur": "<ahorro en euros>", 
+   "ahorro_estimado_pct": "<ahorro porcentual>", 
+   "recomendacion": "COMPRA HOY o ESPERA X días", 
+   "curva": [ 
+    { "dias_anticipacion": "<días>", 
+    "precio_estimado": "<precio>" 
+    } 
+   ] 
+  }
 
 ### 6.2. Docker — empaquetado y despliegue
 
@@ -560,7 +586,8 @@ El modelo entrenado sobre datos 2019 se degrada porque el mercado post-liberaliz
 
 ## 8. Conclusiones y roadmap
 
-Este trabajo demuestra cómo **transformar un notebook académico en un sistema MLOps real**. Sobre el caso conductor del TFM Renfe Madrid-Barcelona hemos montado:
+ 
+Este trabajo demuestra cómo transformar un notebook académico en un sistema MLOps reproducible. El caso de uso final cubre los corredores Madrid–Barcelona, Madrid–Sevilla y Madrid–Valencia y utiliza XGBoost como modelo de regresión tabular supervisada. El pipeline procesa 13.025.112 registros y obtiene un MAE de 4,42 €, un RMSE de 6,73 €, un MAPE de 8,16 % y un R² de 0,93.
 
 - Estructura profesional de repositorio (bloque 1).
 - Flujo colaborativo Git + GitHub con ramas, PRs y protección de main (bloque 2).

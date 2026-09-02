@@ -1,4 +1,4 @@
-"""Interfaz moderna del Renfe Price Optimizer multidestino."""
+"""Interfaz moderna del Renfe Price Optimizer (corredores bidireccionales)."""
 from __future__ import annotations
 
 import os
@@ -11,7 +11,8 @@ import streamlit as st
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 APP_DIR = Path(__file__).resolve().parent
 
-DESTINOS = ["BARCELONA", "SEVILLA", "VALENCIA"]
+# Las 5 ciudades disponibles como origen y destino. Solo MÁLAGA lleva tilde.
+CIUDADES = ["MADRID", "BARCELONA", "SEVILLA", "VALENCIA", "MÁLAGA"]
 TIPOS_TREN = ["AVE", "R. EXPRES", "AV City", "INTERCITY", "ALVIA", "MD", "REGIONAL"]
 CLASES = ["Turista", "Turista Plus", "Preferente"]
 TARIFAS = ["Promo", "Flexible", "Adulto ida"]
@@ -69,9 +70,9 @@ st.markdown(
     <section class="hero">
       <div class="eyebrow">TFM · XGBoost · MLOps</div>
       <h1>Compra tu billete en el mejor momento</h1>
-      <p>Simula la evolución del precio y recibe una recomendación clara para viajar desde Madrid.</p>
+      <p>Simula la evolución del precio y recibe una recomendación clara para tus trayectos entre Madrid, Barcelona, Sevilla, Valencia y Málaga.</p>
       <div class="hero-badges">
-        <span>13 M+ registros</span><span>MAPE 8,16 %</span><span>R² 0,93</span>
+        <span>13 M+ registros</span><span>MAPE 7,67 %</span><span>R² 0,94</span>
       </div>
     </section>
     """,
@@ -90,8 +91,8 @@ with st.sidebar:
 
     st.divider()
     st.markdown("### Configuración")
-    st.caption("Modelo XGBoost multidestino")
-    st.caption("Madrid → Barcelona · Sevilla · Valencia")
+    st.caption("Modelo XGBoost · corredores bidireccionales")
+    st.caption("Madrid · Barcelona · Sevilla · Valencia · Málaga")
     st.divider()
     st.caption("Las estimaciones son orientativas y se basan en datos históricos de 2019.")
 
@@ -100,9 +101,11 @@ st.markdown('<div class="section-label">PLANIFICA TU VIAJE</div>', unsafe_allow_
 with st.container(border=True):
     top1, top2, top3 = st.columns([1.15, 1.15, 0.8])
     with top1:
-        st.text_input("Origen", value="MADRID", disabled=True)
+        origen = st.selectbox("Origen", CIUDADES, index=0)
     with top2:
-        destino = st.selectbox("Destino", DESTINOS)
+        # El destino excluye la ciudad elegida como origen para evitar origen == destino.
+        destinos_disponibles = [c for c in CIUDADES if c != origen]
+        destino = st.selectbox("Destino", destinos_disponibles)
     with top3:
         mes = st.selectbox("Mes", list(range(1, 13)), index=5)
 
@@ -123,7 +126,7 @@ with st.container(border=True):
         temporada = temporada_de(mes)
         st.text_input("Temporada", value=temporada, disabled=True)
         st.markdown(
-            f"<div class='route-card'><span>Ruta</span><strong>Madrid → {destino.title()}</strong>"
+            f"<div class='route-card'><span>Ruta</span><strong>{origen.title()} → {destino.title()}</strong>"
             f"<small>{vehicle_type} · {vehicle_class} · {fare}</small></div>",
             unsafe_allow_html=True,
         )
@@ -131,7 +134,12 @@ with st.container(border=True):
     analizar = st.button("Analizar mejor momento de compra", type="primary", use_container_width=True)
 
 if analizar:
+    if origen == destino:
+        st.warning("El origen y el destino no pueden ser la misma ciudad. Elige un destino diferente.")
+        st.stop()
+
     payload = {
+        "origen": origen,
         "destino": destino,
         "vehicle_type": vehicle_type,
         "vehicle_class": vehicle_class,
@@ -165,7 +173,7 @@ if analizar:
             <section class="decision {estilo}">
               <div class="decision-icon">{icono}</div>
               <div><span>RECOMENDACIÓN</span><h2>{recomendacion}</h2>
-              <p>Madrid → {destino.title()} · {vehicle_type} · {vehicle_class}</p></div>
+              <p>{origen.title()} → {destino.title()} · {vehicle_type} · {vehicle_class}</p></div>
             </section>
             """,
             unsafe_allow_html=True,
@@ -181,7 +189,7 @@ if analizar:
                 st.caption("A la izquierda, menor antelación. A la derecha, compra más anticipada.")
         with tab2:
             r1, r2 = st.columns(2)
-            r1.markdown("**Origen**  \nMadrid")
+            r1.markdown(f"**Origen**  \n{origen.title()}")
             r1.markdown(f"**Destino**  \n{destino.title()}")
             r1.markdown(f"**Servicio**  \n{vehicle_type}")
             r2.markdown(f"**Clase y tarifa**  \n{vehicle_class} · {fare}")

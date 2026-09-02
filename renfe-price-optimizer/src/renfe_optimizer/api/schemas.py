@@ -6,7 +6,6 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-
 # Ciudades disponibles como ORIGEN y DESTINO.
 # Solo MÁLAGA lleva tilde; el resto tal cual en el CSV.
 Ciudad = Literal["MADRID", "BARCELONA", "SEVILLA", "VALENCIA", "MÁLAGA"]

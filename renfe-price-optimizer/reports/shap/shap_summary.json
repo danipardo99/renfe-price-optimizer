@@ -3,13 +3,15 @@
   "filas_explicadas": 2000,
   "variables_mas_relevantes": [
     "fare",
-    "destino",
     "vehicle_type",
     "duration",
-    "vehicle_class"
+    "destino",
+    "origen"
   ],
   "destinos_analizados": [
     "BARCELONA",
+    "MADRID",
+    "MÁLAGA",
     "SEVILLA",
     "VALENCIA"
   ],

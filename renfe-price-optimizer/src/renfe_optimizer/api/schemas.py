@@ -4,15 +4,23 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+
+# Ciudades disponibles como ORIGEN y DESTINO.
+# Solo MÁLAGA lleva tilde; el resto tal cual en el CSV.
+Ciudad = Literal["MADRID", "BARCELONA", "SEVILLA", "VALENCIA", "MÁLAGA"]
 
 
 class ConsultaIn(BaseModel):
-    """Payload de la consulta del usuario. Trayectos desde Madrid."""
+    """Payload de la consulta del usuario. Trayectos entre ciudades (bidireccional)."""
 
-    destino: Literal["BARCELONA", "SEVILLA", "VALENCIA"] = "BARCELONA"
+    origen: Ciudad = "MADRID"
+    destino: Ciudad = "BARCELONA"
+
     vehicle_type: Literal[
-        "AVE", "R. EXPRES", "AV City", "INTERCITY", "ALVIA", "MD", "REGIONAL"
+        "AVE", "REGIONAL", "ALVIA", "INTERCITY", "AV City", "MD", "LD",
+        "R. EXPRES", "EUROMED", "AVLO", "TORRE ORO", "AVANT"
     ] = "AVE"
     vehicle_class: Literal["Turista", "Turista Plus", "Preferente"] = "Turista"
     fare: Literal["Promo", "Flexible", "Adulto ida"] = "Promo"
@@ -25,6 +33,12 @@ class ConsultaIn(BaseModel):
     ] = "Jueves"
     mes: int = Field(6, ge=1, le=12)
     temporada: Literal["Primavera", "Verano", "Otoño", "Invierno"] = "Verano"
+
+    @model_validator(mode="after")
+    def origen_distinto_destino(self) -> "ConsultaIn":
+        if self.origen == self.destino:
+            raise ValueError("El origen y el destino no pueden ser la misma ciudad.")
+        return self
 
 
 class PuntoCurva(BaseModel):

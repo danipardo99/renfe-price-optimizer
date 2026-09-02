@@ -1,11 +1,11 @@
-# Pipeline DVC. Documentado para el TFM aunque se ejecuta en un momento posterior.
+# Pipeline DVC
 
 stages:
   prepare:
     cmd: python -m renfe_optimizer.features
     deps:
       - src/renfe_optimizer/features.py
-      - data/raw/renfe_sample.csv
+      - data/raw/renfe_clean_full.csv
     params:
       - data
       - features

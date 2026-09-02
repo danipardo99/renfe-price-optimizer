@@ -4,13 +4,13 @@
 
 **Autores:** Alejandro Montenegro · Laura Nieto · Daniel Pardo
 
-**Caso conductor:** predicción de precios dinámicos de Renfe en los corredores Madrid–Barcelona, Madrid–Sevilla y Madrid–Valencia, con origen Madrid, y recomendación del momento óptimo de compra.
+**Caso conductor:** predicción de precios dinámicos de Renfe en corredores bidireccionales entre Madrid, Barcelona, Sevilla, Valencia y Málaga —cada ciudad puede ser origen y destino—, y recomendación del momento óptimo de compra.
 
 ---
 
 ## Resumen ejecutivo
 
-Este documento presenta el planteamiento MLOps aplicado al TFM _Predicción de precios dinámicos en el sector ferroviario español de alta velocidad_. Sobre un histórico real de precios de Renfe de 2019, el equipo construye una arquitectura MLOps end-to-end para tres corredores con origen Madrid y destino Barcelona, Sevilla o Valencia. El sistema recorre el ciclo completo desde el dato en crudo hasta una plataforma web accionable, pasando por limpieza y EDA, entrenamiento de un modelo XGBoost de regresión tabular, tracking con MLflow, servicio mediante FastAPI y Streamlit, empaquetado con Docker y validación automática con GitHub Actions.
+Este documento presenta el planteamiento MLOps aplicado al TFM _Predicción de precios dinámicos en el sector ferroviario español de alta velocidad_. Sobre un histórico real de precios de Renfe de 2019, el equipo construye una arquitectura MLOps end-to-end para **corredores bidireccionales** entre cinco ciudades (Madrid, Barcelona, Sevilla, Valencia y Málaga), en los que cada ciudad puede actuar como origen y como destino. El sistema recorre el ciclo completo desde el dato en crudo hasta una plataforma web accionable, pasando por limpieza y EDA, entrenamiento de un modelo XGBoost de regresión tabular, tracking con MLflow, servicio mediante FastAPI y Streamlit, empaquetado con Docker y validación automática con GitHub Actions.
 
 El trabajo cubre los seis criterios de la rúbrica de evaluación (10 puntos totales) y se acompaña de un repositorio ejecutable con el código, los tests, los workflows y la memoria.
 
@@ -70,7 +70,7 @@ Aplicado a nuestro TFM Renfe, el rol de MLOps es:
 - Garantizar que **cualquier miembro del equipo** (o el tribunal) puede clonar el repositorio y ejecutar el pipeline completo.
 - Que **cada experimento** (probando XGBoost, Random Forest, regresión lineal…) queda registrado con sus parámetros y métricas.
 - Que el **modelo servido** por la plataforma Streamlit es exactamente el que se entrenó y validó, sin ambigüedades.
-- Que si mañana **cambian los datos** (post-liberalización, con Ouigo e Iryo), el pipeline se re-ejecuta con un solo comando.
+- Que si mañana **cambian los datos** (post-liberalización, con Ouigo e Iryo) o **se amplía el ámbito de corredores**, el pipeline se re-ejecuta con un solo comando.
 
 ---
 
@@ -227,8 +227,9 @@ Regla de oro del bloque 4 y 6:
                     └──────────────────────────────────────────┘
 
   CSV Kaggle Renfe                                          Usuario final
-    (2019, MAD→BCN / SVQ / VLC)                                    (viajero / broker)
-         │                                                     ▲
+    (2019, corredores bidireccionales                            (viajero / broker)
+     MAD · BCN · SVQ · VLC · AGP)                                    ▲
+         │                                                     │
          ▼                                                     │
    ┌─────────────┐                                     ┌───────────────┐
    │ data/raw/   │◄──── DVC ────► Google Drive         │ Streamlit UI  │
@@ -257,7 +258,7 @@ Regla de oro del bloque 4 y 6:
 
 ### 5.2. Montaje de GitHub paso a paso (VS Code + WSL2)
 
-> Guía completa y ejecutable en [`GITHUB_SETUP.md`](./GITHUB_SETs los pasos clave.
+> Guía completa y ejecutable en [`GITHUB_SETUP.md`](./GITHUB_SETUP.md). Aquí resumimos los pasos clave.
 
 ```bash
 # 1. Crear el repositorio en GitHub (web): "renfe-price-optimizer"
@@ -402,8 +403,8 @@ with mlflow.start_run(run_name="xgboost"):
 
 | Elemento | Ejemplo |
 |---|---|
-| Parámetros | `n_estimators=400`, `max_depth=6`, `learning_rate=0.08` |
-| Métricas | `MAE=8.3`, `RMSE=12.5`, `MAPE=9.4 %`, `R²=0.83` |
+| Parámetros | `n_estimators=50`, `max_depth=8`, `random_state=42` |
+| Métricas | `MAE=4.07`, `RMSE=6.17`, `MAPE=7.67 %`, `R²=0.94` |
 | Artefactos | `renfe_model.pkl`, gráfico de importancia SHAP |
 | Modelo | Objeto sklearn/xgboost listo para cargar |
 | Metadatos | `run_id`, `git_commit`, timestamp, usuario |
@@ -415,42 +416,50 @@ with mlflow.start_run(run_name="xgboost"):
 mlflow.register_model("runs:/<run_id>/model", "renfe-price-optimizer")
 # Luego, desde la UI: promocionar a "Staging" o "Production"
 ```
-#### 5.6.1. Modelo final multidestino y resultados
 
-La versión final del pipeline utiliza un modelo **XGBoost de regresión tabular supervisada**. El dataset limpio incorpora trayectos con origen Madrid y tres destinos:
+#### 5.6.1. Modelo final de corredores bidireccionales y resultados
 
+La versión final del pipeline utiliza un modelo **XGBoost de regresión tabular supervisada**. El dataset limpio incorpora **corredores bidireccionales** entre cinco ciudades, en los que cada una puede actuar como origen y como destino:
+
+- Madrid;
 - Barcelona;
 - Sevilla;
-- Valencia.
+- Valencia;
+- Málaga.
 
-La variable `destino` se incorpora como feature categórica junto con el tipo de tren, la clase, la tarifa, el día de la semana y la temporada. Las variables numéricas incluyen duración, días de antelación, hora de salida y mes.
+Las variables `origen` y `destino` se incorporan como features categóricas junto con el tipo de tren, la clase, la tarifa, el día de la semana y la temporada. Las variables numéricas incluyen duración, días de antelación, hora de salida y mes.
 
 El proceso de feature engineering generó **13.025.112 registros válidos** para el entrenamiento.
 
 | Métrica | Resultado | Objetivo técnico | Cumplimiento |
 |---|---:|---:|:---:|
-| MAE | 4,42 € | — | ✅ |
-| RMSE | 6,73 € | — | ✅ |
-| MAPE | 8,16 % | < 10 % | ✅ |
-| R² | 0,93 | ≥ 0,80 | ✅ |
+| MAE | 4,07 € | — | ✅ |
+| RMSE | 6,17 € | — | ✅ |
+| MAPE | 7,67 % | < 10 % | ✅ |
+| R² | 0,94 | ≥ 0,80 | ✅ |
 
-El modelo explica aproximadamente el 93 % de la variabilidad observada en el precio y mantiene un error porcentual absoluto medio inferior al 10 %. Estos resultados sustituyen las métricas obtenidas previamente con el baseline limitado al corredor Madrid–Barcelona.
+El modelo explica aproximadamente el 94 % de la variabilidad observada en el precio y mantiene un error porcentual absoluto medio inferior al 8 %. La incorporación de la variable `origen` —motivada al confirmarse la naturaleza bidireccional de los corredores— mejoró todas las métricas respecto a la versión anterior, que asumía Madrid como origen único (MAE 4,42 € → 4,07 €; RMSE 6,73 € → 6,17 €; MAPE 8,16 % → 7,67 %; R² 0,931 → 0,942).
 
 Los indicadores de ahorro real, adopción, conversión o porcentaje de compras realizadas en la ventana óptima se consideran **KPIs de negocio futuros**. No se presentan como resultados medidos porque el TFM utiliza datos históricos y no dispone todavía de usuarios reales en producción.
 
 #### 5.6.2. Interpretabilidad del modelo mediante SHAP
 
-
 El análisis SHAP proporciona una explicación consistente del modelo XGBoost.
 
-La tarifa es la variable con mayor influencia global, seguida del destino, el
-tipo de tren, la duración y la clase. Estas variables representan las
-características comerciales y operativas más utilizadas por el modelo para
-distinguir niveles de precio.
+La tarifa es la variable con mayor influencia global, seguida del tipo de tren, la
+duración y, de forma muy próxima entre sí, el destino y el origen. Estas variables
+representan las características comerciales, operativas y de corredor más utilizadas
+por el modelo para distinguir niveles de precio.
 
-La tarifa Flexible, el destino Barcelona, el servicio AVE y la clase Preferente
-presentan generalmente contribuciones asociadas a predicciones superiores. La
-clase Turista se asocia principalmente a contribuciones negativas.
+La incorporación del origen como variable —motivada por la naturaleza bidireccional
+de los corredores— resultó decisiva: alcanza una importancia prácticamente
+equivalente a la del destino y su inclusión mejoró todas las métricas del modelo.
+Ello demuestra que el precio depende del par origen-destino completo y no
+únicamente de la ciudad de llegada.
+
+La tarifa Flexible, el servicio AVE y la clase Preferente presentan generalmente
+contribuciones asociadas a predicciones superiores. La clase Turista se asocia
+principalmente a contribuciones negativas.
 
 La duración presenta un comportamiento no lineal y debe interpretarse junto con
 la ruta y el tipo de servicio. Las variables temporales tienen una importancia
@@ -463,7 +472,8 @@ comprar o esperar.
 Finalmente, las explicaciones globales y locales mejoran la trazabilidad del
 modelo, permiten justificar sus predicciones y reducen la opacidad del sistema.
 Los resultados deben interpretarse como contribuciones predictivas, no como
-relaciones causales.
+relaciones causales. El detalle completo del análisis se recoge en la sección 13
+de la memoria y en `reports/shap/`.
 
 ### 5.7. CI con GitHub Actions
 
@@ -498,6 +508,8 @@ jobs:
 - `python -m renfe_optimizer.train --sample` → el pipeline arranca de punta a punta con una muestra.
 
 Si algo se rompe en verde, la PR queda bloqueada y GitHub muestra el log.
+
+> **Nota sobre el sample de CI:** la muestra `renfe_clean_sample.csv` se regeneró para incluir explícitamente trayectos con Málaga (origen y destino), de forma que el smoke test valide también el corredor incorporado y no solo los originales.
 
 ### 5.8. Reproducibilidad end-to-end
 
@@ -537,6 +549,7 @@ El endpoint `/predict` recibe una consulta del usuario y devuelve la recomendaci
 curl -X POST http://localhost:8000/predict \
      -H "Content-Type: application/json" \
      -d '{
+       "origen": "MÁLAGA",
        "destino": "SEVILLA",
        "vehicle_type": "AVE",
        "vehicle_class": "Turista",
@@ -548,24 +561,27 @@ curl -X POST http://localhost:8000/predict \
        "mes": 7,
        "temporada": "Verano"
      }'
+```
 
-```markdown 
 **Estructura de la respuesta:**
 
- ```json 
- { 
-   "precio_estimado_hoy": "<precio en euros>",
-   "precio_minimo_esperado": "<precio en euros>",
-   "antelacion_optima_dias": "<número de días>", 
-   "ahorro_estimado_eur": "<ahorro en euros>", 
-   "ahorro_estimado_pct": "<ahorro porcentual>", 
-   "recomendacion": "COMPRA HOY o ESPERA X días", 
-   "curva": [ 
-    { "dias_anticipacion": "<días>", 
-    "precio_estimado": "<precio>" 
-    } 
-   ] 
-  }
+```json
+{
+  "precio_estimado_hoy": "<precio en euros>",
+  "precio_minimo_esperado": "<precio en euros>",
+  "antelacion_optima_dias": "<número de días>",
+  "ahorro_estimado_eur": "<ahorro en euros>",
+  "ahorro_estimado_pct": "<ahorro porcentual>",
+  "recomendacion": "COMPRA HOY o ESPERA X días",
+  "curva": [
+    { "dias_anticipacion": "<días>",
+      "precio_estimado": "<precio>"
+    }
+  ]
+}
+```
+
+> El esquema Pydantic valida que `origen` y `destino` pertenezcan a las cinco ciudades permitidas y que no coincidan entre sí (un trayecto no puede tener el mismo origen y destino).
 
 ### 6.2. Docker — empaquetado y despliegue
 
@@ -614,8 +630,7 @@ El modelo entrenado sobre datos 2019 se degrada porque el mercado post-liberaliz
 
 ## 8. Conclusiones y roadmap
 
- 
-Este trabajo demuestra cómo transformar un notebook académico en un sistema MLOps reproducible. El caso de uso final cubre los corredores Madrid–Barcelona, Madrid–Sevilla y Madrid–Valencia y utiliza XGBoost como modelo de regresión tabular supervisada. El pipeline procesa 13.025.112 registros y obtiene un MAE de 4,42 €, un RMSE de 6,73 €, un MAPE de 8,16 % y un R² de 0,93.
+Este trabajo demuestra cómo transformar un notebook académico en un sistema MLOps reproducible. El caso de uso final cubre **corredores bidireccionales** entre Madrid, Barcelona, Sevilla, Valencia y Málaga —cada ciudad puede ser origen y destino— y utiliza XGBoost como modelo de regresión tabular supervisada. El pipeline procesa 13.025.112 registros y obtiene un MAE de 4,07 €, un RMSE de 6,17 €, un MAPE de 7,67 % y un R² de 0,94. La incorporación de la variable `origen`, al confirmarse la bidireccionalidad de los corredores, mejoró todas las métricas respecto a la versión inicial.
 
 - Estructura profesional de repositorio (bloque 1).
 - Flujo colaborativo Git + GitHub con ramas, PRs y protección de main (bloque 2).
@@ -632,8 +647,9 @@ Este trabajo demuestra cómo transformar un notebook académico en un sistema ML
 2. **Data drift automático**: job programado que compara distribuciones y dispara reentrenamiento.
 3. **A/B testing** entre modelos (Random Forest vs XGBoost vs regresión lineal) sobre tráfico real.
 4. **Ampliar el dataset** a datos post-liberalización con Ouigo e Iryo.
-5. **Migrar el tracking** a Azure ML o Databricks cuando el volumen lo justifique.
-6. **Evolucionar la interfaz** hacia un agente conversacional (Copilot Studio + LLM).
+5. **Ampliar la cobertura de corredores** a nuevas ciudades, reutilizando el patrón ya validado con Málaga.
+6. **Migrar el tracking** a Azure ML o Databricks cuando el volumen lo justifique.
+7. **Evolucionar la interfaz** hacia un agente conversacional (Copilot Studio + LLM).
 
 ---
 

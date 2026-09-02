@@ -1,12 +1,16 @@
 # 🚄 Renfe Price Optimizer
 
-[![CI](https://github.com/danipardo99/renfe-price-optimizer/actions/workflows/ci.yml/badge.svg)](https:e-optimizer/actions)
+[![CI](https://github.com/danipardo99/renfe-price-optimizer/actions/workflows/ci.yml/badge.svg)](https://github.com/danipardo99/renfe-price-optimizer/actions)
 
-TFM MLOps para la predicción de precios de billetes ferroviarios y la recomendación del momento óptimo de compra en tres corredores con origen Madrid:
+TFM MLOps para la predicción de precios de billetes ferroviarios y la recomendación del momento óptimo de compra en **corredores bidireccionales** entre cinco ciudades. Cada ciudad puede actuar tanto como origen como destino:
 
-- Madrid → Barcelona
-- Madrid → Sevilla
-- Madrid → Valencia
+- Madrid
+- Barcelona
+- Sevilla
+- Valencia
+- Málaga
+
+Ejemplos de trayectos: Madrid → Barcelona, Málaga → Sevilla, Valencia → Madrid, etc.
 
 **Autores:** Alejandro Montenegro · Laura Nieto · Daniel Pardo  
 **Modelo final:** XGBoost · regresión tabular supervisada  
@@ -14,7 +18,7 @@ TFM MLOps para la predicción de precios de billetes ferroviarios y la recomenda
 
 ## 🎯 Qué hace este proyecto
 
-El sistema predice el precio de un billete en función del destino, el tipo de tren, la clase, la tarifa, la duración, los días de antelación, la hora de salida, el día de la semana, el mes y la temporada.
+El sistema predice el precio de un billete en función del **origen**, el destino, el tipo de tren, la clase, la tarifa, la duración, los días de antelación, la hora de salida, el día de la semana, el mes y la temporada.
 
 Además de estimar el precio, evalúa la curva precio-antelación y devuelve una recomendación accionable:
 
@@ -28,7 +32,7 @@ El proyecto implementa un flujo MLOps end-to-end con:
 - entrenamiento reproducible con XGBoost;
 - tracking de experimentos y artefactos con MLflow;
 - API de predicción con FastAPI;
-- aplicación multidestino con Streamlit;
+- aplicación con selector de origen y destino en Streamlit;
 - empaquetado con Docker;
 - validación automática con GitHub Actions;
 - versionado de código con Git y de datos pesados mediante DVC o almacenamiento externo.
@@ -36,18 +40,23 @@ El proyecto implementa un flujo MLOps end-to-end con:
 ## 🔎 Interpretabilidad SHAP
 
 El modelo final XGBoost se interpreta mediante SHAP sobre una muestra de
-2.000 observaciones del dataset multidestino.
+2.000 observaciones del dataset de corredores bidireccionales.
 
 La importancia global agregada muestra que las variables más relevantes son:
 
-1. Tarifa: 9,46.
-2. Destino: 8,49.
-3. Tipo de tren: 7,78.
-4. Duración: 7,63.
-5. Clase: 4,97.
+1. Tarifa: 9,56.
+2. Tipo de tren: 7,41.
+3. Duración: 6,11.
+4. Destino: 5,93.
+5. Origen: 5,71.
+
+Cabe destacar que **origen y destino presentan una importancia prácticamente
+equivalente**, lo que confirma que el precio depende del par origen-destino
+completo y valida la incorporación de la variable `origen` al modelo.
 
 El análisis incluye importancia global, gráfico beeswarm, gráficos de
-dependencia y explicaciones locales mediante waterfall plots.
+dependencia y explicaciones locales mediante waterfall plots (uno por ciudad de
+destino: Barcelona, Sevilla, Valencia, Málaga y Madrid).
 
 Los resultados están disponibles en:
 
@@ -59,17 +68,22 @@ interpretarse como relaciones causales.
 
 ## 📊 Resultados del modelo final
 
-El modelo final se entrenó sobre el dataset limpio multidestino generado por el proceso de EDA.
+El modelo final se entrenó sobre el dataset limpio de corredores bidireccionales generado por el proceso de EDA.
 
 | Métrica | Resultado | Objetivo | Estado |
 |---|---:|---:|:---:|
 | Registros procesados | 13.025.112 | — | ✅ |
-| MAE | 4,42 € | — | ✅ |
-| RMSE | 6,73 € | — | ✅ |
-| MAPE | 8,16 % | < 10 % | ✅ |
-| R² | 0,93 | ≥ 0,80 | ✅ |
+| MAE | 4,07 € | — | ✅ |
+| RMSE | 6,17 € | — | ✅ |
+| MAPE | 7,67 % | < 10 % | ✅ |
+| R² | 0,94 | ≥ 0,80 | ✅ |
 
-El modelo supera los objetivos técnicos definidos para el TFM. Los indicadores de comportamiento de usuario, ahorro real o conversión continúan siendo objetivos de negocio futuros, ya que requieren uso real de la plataforma.
+El modelo supera los objetivos técnicos definidos para el TFM. La incorporación
+del origen como variable —al confirmarse la naturaleza bidireccional de los
+corredores— mejoró todas las métricas respecto a la versión anterior (MAE 4,42 €
+→ 4,07 €; R² 0,931 → 0,942). Los indicadores de comportamiento de usuario, ahorro
+real o conversión continúan siendo objetivos de negocio futuros, ya que requieren
+uso real de la plataforma.
 
 ## 🧠 Modelado
 
@@ -81,7 +95,7 @@ Se compararon los siguientes enfoques:
 2. Random Forest como alternativa no lineal.
 3. XGBoost como modelo final seleccionado.
 
-XGBoost se utiliza en la versión servida por FastAPI y Streamlit debido a sus mejores resultados sobre el dataset multidestino.
+XGBoost se utiliza en la versión servida por FastAPI y Streamlit debido a sus mejores resultados sobre el dataset de corredores bidireccionales.
 
 ---
 

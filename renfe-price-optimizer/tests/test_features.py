@@ -17,9 +17,9 @@ def crear_dataframe_limpio() -> pd.DataFrame:
     return pd.DataFrame(
         {
             "ciudad_origen": [
+                "MÁLAGA",
                 "MADRID",
-                "MADRID",
-                "MADRID",
+                "SEVILLA",
             ],
             "ciudad_destino": [
                 "BARCELONA",
@@ -112,6 +112,7 @@ def test_build_features_genera_esquema_del_modelo() -> None:
     resultado = build_features(crear_dataframe_limpio())
 
     columnas_esperadas = [
+        "origen",
         "destino",
         "vehicle_type",
         "vehicle_class",
@@ -148,3 +149,10 @@ def test_build_features_elimina_precios_invalidos() -> None:
 
     assert len(resultado) == 1
     assert resultado.iloc[0]["destino"] == "VALENCIA"
+
+
+def test_build_features_incluye_origen() -> None:
+    resultado = build_features(crear_dataframe_limpio())
+
+    assert "origen" in resultado.columns
+    assert set(resultado["origen"]) == {"MÁLAGA", "MADRID", "SEVILLA"}

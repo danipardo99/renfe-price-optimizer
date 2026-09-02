@@ -3,7 +3,7 @@ data:
   processed_path: data/processed/train.parquet
 
 features:
-  categorical: ["destino", "vehicle_type", "vehicle_class", "fare", "dia_semana", "temporada"]
+  categorical: ["origen", "destino", "vehicle_type", "vehicle_class", "fare", "dia_semana", "temporada"]
   numerical: ["duration", "dias_anticipacion", "hora_salida", "mes"]
   ventanas_antelacion: [90, 60, 30, 21, 14, 7, 3, 1]
 model:

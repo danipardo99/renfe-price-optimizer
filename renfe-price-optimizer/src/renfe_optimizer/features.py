@@ -1,8 +1,8 @@
-"""Ingeniería de variables para el dataset Renfe (multidestino desde Madrid).
+"""Ingeniería de variables para el dataset Renfe.
 
 El dataset de entrada ya viene limpio y con features calculadas (proceso de EDA
 del equipo). Este módulo mapea las columnas al formato que espera el modelo y
-selecciona las columnas finales. Cubre los destinos Barcelona, Sevilla y Valencia.
+selecciona las columnas finales. Cubre los destinos Madrid, Málaga, Barcelona, Sevilla y Valencia.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ import pandas as pd
 from renfe_optimizer.config import ROOT_DIR, load_params
 
 # ---------------------------------------------------------------------------
-# Funciones puras (se conservan para tests y para predict.py)
+# Funciones
 # ---------------------------------------------------------------------------
 
 def calcular_dias_anticipacion(fecha_viaje: pd.Series, fecha_captura: pd.Series) -> pd.Series:
@@ -42,10 +42,11 @@ def normaliza_recomendacion(dias_hasta_optimo: int) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Mapeo de columnas del CSV limpio → nombres que usa el modelo
+# Mapeo de columnas
 # ---------------------------------------------------------------------------
 
 MAPEO_COLUMNAS = {
+    "ciudad_origen": "origen",
     "ciudad_destino": "destino",
     "tipo_tren": "vehicle_type",
     "clase": "vehicle_class",
@@ -53,7 +54,6 @@ MAPEO_COLUMNAS = {
     "duracion": "duration",
     "mes_salida": "mes",
     "precio": "price",
-    # dias_anticipacion, hora_salida, dia_semana, temporada se conservan igual
 }
 
 
@@ -87,8 +87,9 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # dia_semana y temporada vienen como texto → se mantienen como categóricas
 
-    # Selección final de columnas del modelo (incluye destino)
+    # Selección final de columnas del modelo
     cols = [
+        "origen",
         "destino",
         "vehicle_type", "vehicle_class", "fare",
         "duration", "dias_anticipacion", "hora_salida", "dia_semana", "mes", "temporada",
